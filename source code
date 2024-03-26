@@ -1,0 +1,135 @@
+import datetime
+import random
+
+class Task:
+    def __init__(self, description, due_date):
+        self.description = description
+        self.due_date = due_date
+        self.completed = False
+
+    def mark_completed(self):
+        self.completed = True
+
+    def __str__(self):
+        return f"{self.description},{self.due_date},{self.completed}\n"
+
+class ToDoList:
+    def __init__(self):
+        self.tasks = []
+
+    def add_task(self, task):
+        self.tasks.append(task)
+
+    def complete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            self.tasks[index].mark_completed()
+
+    def delete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            del self.tasks[index]
+
+    def get_tasks_due_on(self, date):
+        return [task for task in self.tasks if task.due_date.date() == date.date()]
+
+    def get_random_task(self):
+        incomplete_tasks = [task for task in self.tasks if not task.completed]
+        if incomplete_tasks:
+            return random.choice(incomplete_tasks)
+        else:
+            return None
+
+    def save_to_file(self, filename):
+        with open(filename, "w") as file:
+            for task in self.tasks:
+                file.write(str(task))
+
+    @staticmethod
+    def load_from_file(filename):
+        todo_list = ToDoList()
+        try:
+            with open(filename, "r") as file:
+                for line in file:
+                    description, due_date_str, completed_str = line.strip().split(',')
+                    due_date = datetime.datetime.strptime(due_date_str, "%Y-%m-%d %H:%M:%S")
+                    completed = bool(completed_str)
+                    task = Task(description, due_date)
+                    task.completed = completed
+                    todo_list.add_task(task)
+        except FileNotFoundError:
+            pass  # Dosya bulunmazsa geç
+
+        return todo_list
+
+def main():
+    file_name = input("Lütfen tasks.txt dosyasının tam yolunu girin (örn: /path/to/tasks.txt): ")
+    todo_list = ToDoList.load_from_file(file_name)
+
+    while True:
+        print("██████╗░██╗░░░██╗  ███████╗██╗░░░░░██████╗░")
+        print("██╔══██╗██║░░░██║  ██╔════╝██║░░░░░██╔══██╗")
+        print("██████╔╝██║░░░██║  █████╗░░██║░░░░░██████╔╝")
+        print("██╔══██╗██║░░░██║  ██╔══╝░░██║░░░░░██╔═══╝░")
+        print("██║░░██║╚██████╔╝  ██║░░░░░███████╗██║░░░░░")
+        print("╚═╝░░╚═╝░╚═════╝░  ╚═╝░░░░░╚══════╝╚═╝░░░░░")
+        print("\n1. İşleri Görüntüle")
+        print("2. İş Ekle")
+        print("3. İşi Tamamla")
+        print("4. İşi Sil")
+        print("5. Belirli Bir Tarihe Ait İşleri Listele")
+        print("6. Rastgele İş Öner")
+        print("7. Çıkış")
+
+        choice = input("Seçiminizi yapın: ")
+
+        if choice == "1":
+            for i, task in enumerate(todo_list.tasks):
+                status = "Yapıldı" if task.completed else "Yapılmadı"
+                print(f"{i+1}. {task.description} - Durum: {status}")
+        elif choice == "2":
+            description = input("Yeni iş açıklamasını girin: ")
+            year = int(input("Yılı girin: "))
+            month = int(input("Ayı girin: "))
+            day = int(input("Günü girin: "))
+            hour = int(input("Saatı girin (örn: 17 veya 17.25 gibi): "))
+            minute = int(input("Dakikayı girin: "))
+            new_task = Task(description, datetime.datetime(year, month, day, hour, minute))
+            todo_list.add_task(new_task)
+            todo_list.save_to_file(file_name)
+            print("İş başarıyla eklendi ve kaydedildi.")
+        elif choice == "3":
+            index = int(input("Tamamlanan işin numarasını girin: ")) - 1
+            todo_list.complete_task(index)
+            todo_list.save_to_file(file_name)
+            print("İş başarıyla tamamlandı ve kaydedildi.")
+        elif choice == "4":
+            index = int(input("Silinecek işin numarasını girin: ")) - 1
+            todo_list.delete_task(index)
+            todo_list.save_to_file(file_name)
+            print("İş başarıyla silindi ve kaydedildi.")
+        elif choice == "5":
+            year = int(input("Yılı girin: "))
+            month = int(input("Ayı girin: "))
+            day = int(input("Günü girin: "))
+            date = datetime.datetime(year, month, day)
+            tasks_due_on_date = todo_list.get_tasks_due_on(date)
+            if tasks_due_on_date:
+                print(f"{date.date()} tarihine ait işler:")
+                for task in tasks_due_on_date:
+                    status = "Yapıldı" if task.completed else "Yapılmadı"
+                    print(f"- {task.description} - Durum: {status}")
+            else:
+                print("Belirtilen tarihe ait iş bulunamadı.")
+        elif choice == "6":
+            random_task = todo_list.get_random_task()
+            if random_task:
+                print(f"Önerilen İş: {random_task.description}")
+            else:
+                print("Tamamlanmamış iş bulunmamaktadır.")
+        elif choice == "7":
+            print("Programdan çıkılıyor...")
+            break
+        else:
+            print("Geçersiz seçim. Tekrar deneyin.")
+
+if __name__ == "__main__":
+    main()
